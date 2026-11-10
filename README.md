@@ -5,6 +5,15 @@ Vazifa: 20 ta tayyor SVG-illyustratsiya elementidan turli formatlarda avtomatik
 kompozitsiyalar yig'ib beruvchi servis — Figma plagini ko'rinishida (chunki
 kutubxona va komponentlar aynan Figma'ning o'zida mavjud).
 
+## Tasdiqlangan holat
+
+Bu plagin Figma desktop ilovasida (Plugins → Development → Import plugin
+from manifest) real kutubxona (Кошелек, Лампа, Наушники, Монета, Пазлы,
+Телефон) bilan ishga tushirilib tekshirilgan: kutubxonaga qo'shish,
+mavzu bo'yicha moslashtirish (masalan, "деньги" so'zi "Кошелек"/"Монета"ni
+to'g'ri tanlagan), kompozitsiya yig'ish va interfeys holatlari (tugmalar)
+kutilganidek ishlagan.
+
 ## Nega Figma plagini (alohida sayt emas)
 
 Topshiriqda aytilgan: "Не обязательно разрабатывать отдельный сайт или
