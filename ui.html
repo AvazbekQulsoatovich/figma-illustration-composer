@@ -28,11 +28,20 @@
     background: var(--figma-color-bg, #fff); color: inherit;
   }
   button {
-    cursor: pointer; border: 1px solid #ccc; border-radius: 6px; padding: 6px 10px;
-    background: #f4f4f4; font-size: 12px;
+    cursor: pointer; border: 1.5px solid #999; border-radius: 6px; padding: 6px 10px;
+    background: #fff; font-size: 12px; font-weight: 500; color: #1a1a1a;
+    transition: background-color .1s, border-color .1s;
   }
+  button:hover:not(:disabled) { background: #f0f0f0; border-color: #777; }
+  button:active:not(:disabled) { background: #e4e4e4; }
   button.primary { background: #18a0fb; color: #fff; border-color: #18a0fb; }
-  button:disabled { opacity: .5; cursor: default; }
+  button.primary:hover:not(:disabled) { background: #0d8ee0; border-color: #0d8ee0; }
+  /* Disabled really means "not usable yet" (e.g. recolor/export before a composition
+     exists) — styled clearly duller than any normal button so the two states never
+     look alike. */
+  button:disabled {
+    opacity: .4; cursor: not-allowed; background: #f4f4f4; border-color: #ddd; color: #888;
+  }
   .row { display: flex; gap: 6px; margin: 6px 0; align-items: center; }
   .row > * { flex: 1; }
   .section { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
@@ -126,12 +135,12 @@
   <h2>Rang palitrasi</h2>
   <div class="hint">Vergul bilan ajratilgan HEX ranglar (masalan: #FFB199, #3A2E5C, #18A0FB)</div>
   <input type="text" id="paletteInput" placeholder="#FFB199, #3A2E5C, #18A0FB" />
-  <button id="btnRecolor" style="width:100%; margin-top:6px;">Tanlangan kompozitsiyani qayta bo'yash</button>
+  <button id="btnRecolor" style="width:100%; margin-top:6px;" disabled title="Avval kompozitsiyani yig'ing">Tanlangan kompozitsiyani qayta bo'yash</button>
 </div>
 
 <div class="section" style="border-bottom:none;">
   <h2>Eksport</h2>
-  <button class="primary" id="btnExport" style="width:100%">Oxirgi kompozitsiyani SVG qilib yuklab olish</button>
+  <button class="primary" id="btnExport" style="width:100%" disabled title="Avval kompozitsiyani yig'ing">Oxirgi kompozitsiyani SVG qilib yuklab olish</button>
   <div class="status" id="exportStatus"></div>
 </div>
 
@@ -354,6 +363,11 @@
     if (msg.type === "build-result") {
       state.lastFrameId = msg.frameId;
       document.getElementById("buildStatus").textContent = "Tayyor: " + msg.name;
+      // A composition now exists, so recolor/export have something to act on.
+      document.getElementById("btnRecolor").disabled = false;
+      document.getElementById("btnRecolor").title = "";
+      document.getElementById("btnExport").disabled = false;
+      document.getElementById("btnExport").title = "";
     }
 
     if (msg.type === "export-result") {
