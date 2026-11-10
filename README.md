@@ -1,119 +1,123 @@
-# Illustration Composer — Figma plugin
+# Illustration Composer — плагин для Figma
 
-Bu loyiha "Тестовое | иллюстрации" topshirig'i uchun tayyorlangan Figma plagini.
-Vazifa: 20 ta tayyor SVG-illyustratsiya elementidan turli formatlarda avtomatik
-kompozitsiyalar yig'ib beruvchi servis — Figma plagini ko'rinishida (chunki
-kutubxona va komponentlar aynan Figma'ning o'zida mavjud).
+**Автор:** Avazbek Jumanazarov (реализовано с использованием AI-ассистента Claude — Anthropic).
 
-## Tasdiqlangan holat
+Этот проект подготовлен для тестового задания "Тестовое | иллюстрации".
+Задача: сервис, который собирает различные композиции из набора готовых
+SVG-иллюстраций (библиотека компонентов) — реализован в виде плагина для
+Figma, так как сама библиотека и компоненты уже существуют в Figma.
 
-Bu plagin Figma desktop ilovasida (Plugins → Development → Import plugin
-from manifest) real kutubxona (Кошелек, Лампа, Наушники, Монета, Пазлы,
-Телефон) bilan ishga tushirilib tekshirilgan: kutubxonaga qo'shish,
-mavzu bo'yicha moslashtirish (masalan, "деньги" so'zi "Кошелек"/"Монета"ni
-to'g'ri tanlagan), kompozitsiya yig'ish va interfeys holatlari (tugmalar)
-kutilganidek ishlagan.
+## Подтверждённое состояние
 
-## Nega Figma plagini (alohida sayt emas)
+Плагин был запущен и протестирован в Figma Desktop (Plugins → Development
+→ Import plugin from manifest) на реальной библиотеке (Кошелек, Лампа,
+Наушники, Монета, Пазлы, Телефон): добавление в библиотеку, подбор по
+метафоре (например, запрос "деньги" корректно выбрал "Кошелек"/"Монета"),
+сборка композиции и состояния интерфейса — всё отработало как ожидалось.
 
-Topshiriqda aytilgan: "Не обязательно разрабатывать отдельный сайт или
-приложение. Это может быть плагин для Figma (ведь вся библиотека и компоненты
-как раз существуют в Figma)". Plagin yondashuvi obyektlarni hech qanday
-eksport/import qilmasdan, to'g'ridan-to'g'ri Figma hujjatidagi haqiqiy vektor
-tugunlar (node) bilan ishlaydi — shu bois "obyektlar hech qanday o'zgarmasligi
-va natija vektor formatda bo'lishi" talabi tabiiy bajariladi: biz obyektlarni
-klonlaymiz (`node.clone()`), ularning path/fill tuzilishi saqlanib qoladi, va
-yakunda `exportAsync({format:'SVG'})` orqali tahrirlanadigan SVG chiqariladi.
+## Почему плагин для Figma (а не отдельный сайт)
 
-## Fayllar
+В задании сказано: "Не обязательно разрабатывать отдельный сайт или
+приложение. Это может быть плагин для Figma (ведь вся библиотека и
+компоненты как раз существуют в Figma)". Такой подход позволяет работать
+напрямую с реальными векторными узлами (node) документа Figma, без
+экспорта/импорта файлов — поэтому требование "объекты никак не меняются,
+а итог остаётся в векторном формате" выполняется естественным образом: мы
+клонируем узлы (`node.clone()`), их структура путей/заливок сохраняется,
+а в конце `exportAsync({format:'SVG'})` отдаёт редактируемый SVG.
 
-- `manifest.json` — plagin manifesti (nom, kirish huquqlari).
-- `code.js` — plagin asosiy kodi (Figma hujjati bilan ishlovchi "sandbox" qism).
-  Build qadami shart emas — oddiy JavaScript, to'g'ridan-to'g'ri ishlaydi.
-- `ui.html` — plagin oynasi (interfeys): ikkala stsenariy, kutubxona boshqaruvi,
-  tahrirlash tugmalari, palitra va eksport — barchasi shu faylda (inline CSS/JS).
+## Файлы
 
-## Arxitektura — qisqacha
+- `manifest.json` — манифест плагина (имя, права доступа).
+- `code.js` — основной код плагина (часть, работающая с документом Figma,
+  "sandbox"). Шаг сборки не нужен — обычный JavaScript, запускается
+  напрямую.
+- `ui.html` — окно плагина (интерфейс): оба сценария, управление
+  библиотекой, кнопки редактирования, палитра и экспорт — всё в одном
+  файле (inline CSS/JS).
 
-1. **Kutubxona (registry).** Foydalanuvchi Figma'da kerakli obyekt(lar)ni
-   tanlaydi va "Kutubxona" bo'limida "Tanlangan obyektni kutubxonaga qo'shish"
-   tugmasini bosadi. Har bir element `{id, name, tags}` ko'rinishida
-   `figma.clientStorage`'da saqlanadi (faqat havola — asl node hujjatda qoladi).
-   Shuningdek "Hujjatni avtomatik skanerlash" tugmasi butun fayl bo'ylab
-   nomzodlarni topib, foydalanuvchiga belgilab qo'shish imkonini beradi
-   (aniqlik uchun — avtomatik topilganlarni foydalanuvchi ko'zdan kechiradi).
-2. **Teglar.** Har bir element nomi (masalan "Кошелек", "Лампа", "Пазлы")dan
-   avtomatik kalit so'zlar ajratiladi va kichik RU sinonim lug'ati
-   (`SYNONYMS` — code.js ichida) orqali kengaytiriladi (masalan "деньги" →
-   кошелек/монета/бюджет). Bu — tashqi AI chaqiruvisiz, oddiy va tezkor
-   moslashtirish usuli (foydalanuvchi so'rovi bilan tuzilishi bo'yicha
-   taqqoslanadi).
-3. **Stsenariy 1 (mavzu bo'yicha).** Foydalanuvchi matn kiritadi → so'zlar
-   kutubxona teglariga solishtiriladi (`matchScore`) → eng mos N ta element
-   tanlanadi. Agar hech narsa mos kelmasa, tasodifiy elementlar tanlanadi va
-   foydalanuvchiga ko'rsatiladi (bo'sh natija chiqmasligi uchun).
-4. **Stsenariy 2 (qo'lda).** Kutubxona to'r (grid) ko'rinishida ko'rsatiladi,
-   foydalanuvchi kerakli elementlarga bosib tanlaydi.
-5. **Kompozitsiya yig'ish.** Tanlangan ID'lar asosida yangi Frame yaratiladi
-   (tanlangan o'lchamda: 1200×630, 1080×1080, 1600×900 yoki erkin), har bir
-   element klonlanadi, grid+tasodifiy siljish/burchak bilan joylashtiriladi
-   (kutubxona namunalaridagi "со смещением" uslubiga o'xshash). Keyinchalik
-   foydalanuvchi Figma'ning o'z vositalari bilan (sudrab ko'chirish, o'lchamini
-   o'zgartirish) yoki plagindagi qo'shimcha tugmalar bilan (dublikat, o'chirish,
-   qatlam tartibi, burish) tahrirlay oladi.
-6. **Rang palitrasi.** Kompozitsiyadagi barcha solid fill ranglar yig'iladi,
-   yorqinlik (luminance) bo'yicha saralanadi va kiritilgan palitra ranglari
-   bilan mos ravishda almashtiriladi — bu Figma'dagi "recolor" plaginlarida
-   keng qo'llaniladigan oddiy usul.
-7. **Eksport.** `frame.exportAsync({format:'SVG'})` — natija vektor SVG
-   sifatida, brauzer orqali yuklab olinadi (rastrga aylanmaydi).
+## Архитектура — кратко
 
-## O'rnatish va sinab ko'rish (Figma desktop yoki brauzer)
+1. **Библиотека (registry).** Пользователь выбирает нужный(е) объект(ы) в
+   Figma и нажимает кнопку "Добавить выбранное в библиотеку" в разделе
+   "Библиотека". Каждый элемент сохраняется как `{id, name, tags}` в
+   `figma.clientStorage` (только ссылка — сам узел остаётся в документе).
+   Также есть кнопка автоматического сканирования документа, которая
+   находит кандидатов по всему файлу — пользователь вручную проверяет и
+   подтверждает, что добавлять (для точности).
+2. **Теги.** Из имени каждого элемента (например "Кошелек", "Лампа",
+   "Пазлы") автоматически извлекаются ключевые слова, которые
+   расширяются небольшим встроенным словарём синонимов на русском
+   (`SYNONYMS` в code.js — например "деньги" → кошелек/монета/бюджет).
+   Это простой способ подбора без внешнего вызова AI (запрос пользователя
+   сравнивается с тегами по структуре).
+3. **Сценарий 1 (по теме).** Пользователь вводит текст → слова
+   сравниваются с тегами библиотеки (`matchScore`) → выбираются N самых
+   подходящих элементов. Если совпадений нет, выбираются случайные
+   элементы и пользователь видит это явно (чтобы результат не был
+   пустым).
+4. **Сценарий 2 (вручную).** Библиотека показывается в виде сетки,
+   пользователь выбирает нужные элементы кликом.
+5. **Сборка композиции.** По выбранным ID создаётся новый Frame
+   (выбранного размера: 1200×630, 1080×1080, 1600×900 или произвольный),
+   каждый элемент клонируется, размещается по сетке со случайным
+   смещением/поворотом (похоже на стиль "со смещением" из примеров
+   библиотеки). Далее пользователь может редактировать инструментами
+   самой Figma (перетаскивание, изменение размера) или дополнительными
+   кнопками плагина (дублировать, удалить, порядок слоёв, поворот).
+6. **Цветовая палитра.** Собираются все сплошные (solid) цвета заливки в
+   композиции, сортируются по яркости (luminance) и сопоставляются с
+   цветами введённой палитры — распространённый простой приём в
+   recolor-плагинах Figma.
+7. **Экспорт.** `frame.exportAsync({format:'SVG'})` — результат в виде
+   векторного SVG, скачивается через браузер (не превращается в растр).
 
-1. Figma ilovasini oching (desktop versiyasi tavsiya etiladi).
+## Установка и тестирование (Figma desktop)
+
+1. Откройте приложение Figma (рекомендуется desktop-версия).
 2. **Plugins → Development → Import plugin from manifest...**
-3. Ushbu papkadagi `manifest.json` faylini tanlang.
-4. Plagin **Plugins → Development → Illustration Composer** sifatida paydo
-   bo'ladi. Uni istalgan Figma faylida ishga tushiring (eng yaxshisi — mijoz
-   yuborgan shu test faylining o'zida, chunki unda tayyor kutubxona bor).
-5. Avval **"Kutubxona"** bo'limida: faylning "Библиотека компонентов"
-   sahifasiga o'ting, kerakli ikonkalarni (Кошелек, Лампа, Наушники, Монета,
-   Пазлы, Телефон va boshqalar) birma-bir yoki guruh qilib tanlang va
-   "Tanlangan obyektni kutubxonaga qo'shish" tugmasini bosing (yoki
-   "Hujjatni avtomatik skanerlash" orqali tezroq qo'shing).
-6. **"1. Mavzu bo'yicha"** bo'limida biror so'z yozib ko'ring (masalan
-   "идея" yoki "деньги"), "Mos elementlarni tanlash", so'ng
-   "Kompozitsiyani yig'ish".
-7. **"2. Qo'lda tanlash"** bo'limida kerakli elementlarga bosib tanlang va
-   xuddi shunday yig'ing.
-8. Palitra va eksportni sinab ko'ring.
+3. Выберите файл `manifest.json` из этой папки.
+4. Плагин появится как **Plugins → Development → Illustration Composer**.
+   Запустите его в нужном файле Figma (лучше всего — в файле с тестовым
+   заданием, так как там уже есть готовая библиотека).
+5. Сначала в разделе **"Библиотека"**: перейдите на страницу "Библиотека
+   компонентов", выберите нужные иконки (Кошелек, Лампа, Наушники,
+   Монета, Пазлы, Телефон и другие) по одной или группой и нажмите
+   "Добавить выбранное в библиотеку" (или используйте автоматическое
+   сканирование для скорости).
+6. В разделе **"1. По теме"** введите слово (например "идея" или
+   "деньги"), нажмите "Подобрать элементы", затем "Собрать композицию".
+7. В разделе **"2. Выбрать вручную"** выберите нужные элементы кликом и
+   соберите таким же образом.
+8. Проверьте палитру и экспорт.
 
-## Muhim cheklovlar / nima yetishmaydi (keyingi qadamlar)
+## Важные ограничения / что можно улучшить дальше
 
-- Avtomatik skanerlash hali "qaysi obyekt haqiqiy illyustratsiya, qaysi fon
-  yoki palitra namunasi" degan farqni mukammal bilmaydi — shuning uchun
-  foydalanuvchi tasdiqlashi kerak (belgilash orqali). Haqiqiy loyihada buni
-  nom konventsiyasi yoki Figma komponent (Component/Variant) sifatida
-  belgilab, aniqroq qilish mumkin.
-- Teglarni qo'lda tahrirlash UI'si hozircha yo'q (kod tomonida tayyor —
-  `update-tags` xabari); hozircha teglar faqat obyekt nomidan avtomatik
-  olinadi. Obyektni Figma'da qayta nomlab, qayta ro'yxatga olish orqali
-  teglarni yangilash mumkin.
-- Joylashtirish algoritmi oddiy grid + tasodifiy siljish; murakkabroq
-  "aqlli" joylashtirish (collision-aware) keyingi iteratsiyada qo'shilishi
-  mumkin.
-- Hozircha tashqi AI API (masalan OpenAI) ishlatilmagan — bu ongli tanlov:
-  tezroq, bepul va ishonchli ishlaydi, hamda `networkAccess` ruxsatlarisiz
-  ishlaydi. Agar kelajakda haqiqiy til modeli orqali "aqlliroq" moslashtirish
-  kerak bo'lsa, `manifest.json`'ga `networkAccess.allowedDomains` qo'shib,
-  `code.js`'dagi `match` ishlovchisini API chaqiruviga almashtirish kifoya.
+- Автоматическое сканирование пока не идеально отличает, какой объект —
+  настоящая иллюстрация, а какой — фон или образец палитры, поэтому
+  пользователь подтверждает добавление вручную (через чекбоксы). В
+  реальном проекте это можно улучшить через соглашение об именовании или
+  пометку компонентов (Component/Variant) в Figma.
+- UI для ручного редактирования тегов пока отсутствует (на стороне кода
+  уже готово — сообщение `update-tags`); пока теги берутся автоматически
+  из имени объекта. Обновить теги можно, переименовав объект в Figma и
+  заново добавив его в библиотеку.
+- Алгоритм размещения — простая сетка со случайным смещением; более
+  сложное "умное" размещение (с учётом пересечений) можно добавить на
+  следующей итерации.
+- Внешний AI API (например OpenAI) пока не используется — это осознанное
+  решение: работает быстрее, бесплатно и надёжно, без дополнительных
+  разрешений в `networkAccess`. Если в будущем понадобится более "умный"
+  подбор через языковую модель, достаточно добавить
+  `networkAccess.allowedDomains` в `manifest.json` и заменить обработчик
+  `match` в `code.js` на вызов API.
 
-## Topshiriqda so'ralgan ma'lumotlar (mijozga javob uchun)
+## Информация, запрошенная в задании (для ответа заказчику)
 
-- **Ishlatilgan AI vositalari:** Claude (Anthropic) — butun servis
-  arxitekturasi, kod (manifest.json, code.js, ui.html) va hujjatlar shu
-  yordamchi bilan ishlab chiqildi/yozildi.
-- **Arxitektura:** yuqoridagi "Arxitektura — qisqacha" bo'limiga qarang.
-- **Saqlash:** kutubxona ro'yxati `figma.clientStorage`'da (`{id, name,
-  tags}`), asl vektor ma'lumotlar hech qayerga nusxalanmaydi — har doim
-  jonli Figma node'dan o'qiladi.
+- **Использованные AI-инструменты:** Claude (Anthropic) — вся
+  архитектура сервиса, код (manifest.json, code.js, ui.html) и
+  документация разработаны с помощью этого ассистента.
+- **Архитектура:** см. раздел "Архитектура — кратко" выше.
+- **Хранение данных:** список библиотеки хранится в
+  `figma.clientStorage` (`{id, name, tags}`), сами векторные данные
+  никуда не копируются — всегда читаются из актуального узла Figma.
